@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#12131a">
+<title>D&amp;D 5e 单人跑团台 · 网页版</title>
+<style>
+:root{
+  --bg:#0e0f14; --bg2:#15171f; --bg3:#1c1f2a; --line:#2a2e3d;
+  --txt:#e6e8f0; --dim:#9aa3b8; --dim2:#6f7688;
+  --gold:#d9b26a; --red:#e05a5a; --green:#4fd18b; --blue:#6aa9ff; --purple:#b48cff;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{
+  background:radial-gradient(1200px 600px at 20% -10%,#1b1e2b 0%,#0e0f14 60%) fixed,#0e0f14;
+  color:var(--txt);font:15px/1.7 "Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+button{font:inherit;color:inherit;cursor:pointer}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#2c3040;border-radius:8px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ---------- 顶栏 ---------- */
+.topbar{
+  display:flex;align-items:center;gap:10px;padding:8px 14px;
+  background:linear-gradient(180deg,#171923,#12141c);border-bottom:1px solid var(--line);
+  flex:0 0 auto;z-index:20;
+}
+.brand{font-weight:700;letter-spacing:.5px;color:var(--gold);white-space:nowrap;font-size:15px}
+.brand small{color:var(--dim2);font-weight:400;margin-left:6px;font-size:11px}
+.chips{display:flex;gap:6px;flex:1;overflow:hidden}
+.chip{
+  font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--line);
+  background:#1a1d27;color:var(--dim);white-space:nowrap;
+}
+.chip.ok{color:var(--green);border-color:#2b5a45;background:#12271f}
+.chip.warn{color:var(--gold);border-color:#4a3f24;background:#241f12}
+.chip.err{color:var(--red);border-color:#5a2b2b;background:#261416}
+.topbar .btns{display:flex;gap:6px}
+.tbtn{background:#20242f;border:1px solid var(--line);padding:5px 11px;border-radius:8px;font-size:13px;transition:.15s}
+.tbtn:hover{background:#2a2f3d;border-color:#3b4256}
+.tbtn.primary{background:linear-gradient(180deg,#3a2f18,#2a2313);border-color:#5c4a24;color:var(--gold)}
+
+/* ---------- 布局 ---------- */
+.layout{flex:1;display:flex;min-height:0}
+.pane{display:flex;flex-direction:column;min-height:0}
+.pane-left,.pane-right{
+  width:290px;flex:0 0 290px;background:#12141b;border-right:1px solid var(--line);
+  overflow-y:auto;padding:12px;gap:10px;
+}
+.pane-right{border-right:none;border-left:1px solid var(--line);width:280px;flex:0 0 280px}
+.pane-main{flex:1;min-width:0;background:linear-gradient(180deg,#101219,#0e0f14)}
+.pane-title{
+  font-size:11px;letter-spacing:2px;color:var(--dim2);text-transform:uppercase;
+  margin:4px 0 2px;display:flex;justify-content:space-between;align-items:center;
+}
+.pane-title span{letter-spacing:0;color:var(--dim2);font-size:10px}
+
+/* ---------- 状态面板 ---------- */
+.panel-card{
+  background:linear-gradient(180deg,#1a1e2b,#141722);border:1px solid var(--line);
+  border-radius:12px;padding:11px 12px;
+}
+.panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 6px}
+.pcell .k{font-size:10px;color:var(--dim2);letter-spacing:1px}
+.pcell .v{font-size:15px;font-weight:700;color:var(--txt)}
+.pcell .v.hp{color:var(--red)}
+.pcell .v.ac{color:var(--blue)}
+.pbar{height:5px;border-radius:4px;background:#262a38;margin-top:5px;overflow:hidden}
+.pbar i{display:block;height:100%;background:linear-gradient(90deg,#e05a5a,#f08a5a);border-radius:4px}
+.prow{font-size:12.5px;color:var(--dim);margin-top:7px;line-height:1.6;word-break:break-all}
+.prow b{color:var(--txt);font-weight:600}
+.panel-raw{
+  white-space:pre-wrap;font:12.5px/1.65 ui-monospace,Consolas,monospace;color:var(--dim);
+  background:#0f1118;border:1px dashed #2a2e3d;border-radius:10px;padding:10px;
+}
+.empty{color:var(--dim2);font-size:12.5px;padding:10px;text-align:center;border:1px dashed #242835;border-radius:10px}
+
+/* 角色卡 */
+.char-block{background:#141722;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px}
+.char-block .cl{display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px dashed #20242f}
+.char-block .cl:last-child{border-bottom:none}
+.char-block .cl b{color:var(--gold);font-weight:600}
+
+/* ---------- 对话 ---------- */
+.chat{flex:1;overflow-y:auto;padding:18px 20px 8px;scroll-behavior:smooth}
+.msg{max-width:860px;margin:0 auto 16px;display:flex;gap:10px}
+.msg .av{
+  width:30px;height:30px;flex:0 0 30px;border-radius:9px;display:grid;place-items:center;
+  font-size:14px;background:#1e222e;border:1px solid var(--line);
+}
+.msg .body{min-width:0;flex:1}
+.msg .who{font-size:11px;color:var(--dim2);margin-bottom:3px;letter-spacing:1px}
+.bubble{
+  background:#171a24;border:1px solid var(--line);border-radius:12px;padding:10px 13px;
+  word-break:break-word;overflow-wrap:anywhere;
+}
+.msg.user .bubble{background:linear-gradient(180deg,#1e2534,#19202c);border-color:#2e3a52}
+.msg.dm .bubble{background:#15171f}
+.msg.sys .bubble{background:#1a1712;border-color:#3d3320;color:#d9c08a;font-size:13px}
+.bubble p{margin:.35em 0}
+.bubble pre{
+  background:#0d0f16;border:1px solid #262b39;border-radius:9px;padding:9px 11px;overflow-x:auto;
+  font:12.5px/1.6 ui-monospace,Consolas,monospace;color:#c7cede;margin:.5em 0;
+}
+.bubble code{background:#0d0f16;padding:1px 5px;border-radius:5px;font-size:12.5px;color:#c7cede}
+.bubble strong{color:var(--gold)}
+.bubble em{color:var(--purple);font-style:normal}
+.bubble .panel-line{color:#8fa8c9}
+
+/* 选项按钮区 */
+.choice-bar{
+  display:flex;flex-wrap:wrap;gap:7px;padding:0 20px 8px;max-width:900px;margin:0 auto;width:100%;
+}
+.choice{
+  background:#1b2130;border:1px solid #2c3852;color:#cbd6ea;border-radius:20px;
+  padding:6px 13px;font-size:13px;transition:.15s;text-align:left;
+}
+.choice:hover{background:#243047;border-color:#3d5480;color:#fff}
+.choice i{color:var(--gold);font-style:normal;font-weight:700;margin-right:5px}
+
+/* 输入 */
+.input-bar{
+  display:flex;gap:8px;padding:10px 20px calc(10px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);background:#0f1118;flex:0 0 auto;
+}
+.input-bar textarea{
+  flex:1;resize:none;height:46px;max-height:150px;background:#171a24;color:var(--txt);
+  border:1px solid var(--line);border-radius:12px;padding:11px 13px;font:15px/1.4 inherit;outline:none;
+}
+.input-bar textarea:focus{border-color:#3a4560}
+.send{
+  background:linear-gradient(180deg,#3a2f18,#2a2313);border:1px solid #5c4a24;color:var(--gold);
+  border-radius:12px;padding:0 20px;font-weight:700;font-size:14px;
+}
+.send:disabled{opacity:.45;cursor:default}
+
+/* ---------- 元指令 ---------- */
+.meta-cmds{display:flex;flex-direction:column;gap:6px}
+.mcmd{
+  display:flex;align-items:center;gap:8px;background:#161a24;border:1px solid var(--line);
+  border-radius:9px;padding:6px 9px;font-size:12.5px;text-align:left;transition:.13s;
+}
+.mcmd:hover{background:#1e2432;border-color:#38425a}
+.mcmd code{color:var(--gold);font:12px ui-monospace,Consolas,monospace;min-width:48px}
+.mcmd span{color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rule-q{display:flex;gap:6px;margin-top:4px}
+.rule-q input{
+  flex:1;background:#161a24;border:1px solid var(--line);border-radius:8px;color:var(--txt);
+  padding:6px 9px;font-size:12.5px;outline:none;min-width:0;
+}
+.rule-q button{background:#20242f;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12.5px}
+
+/* 快照 */
+.snapshot{display:flex;flex-direction:column;gap:8px;font-size:12.5px}
+.snap-sec{background:#141722;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.snap-sec h4{margin:0 0 5px;font-size:11px;letter-spacing:1.5px;color:var(--dim2);font-weight:600}
+.snap-sec .li{padding:2px 0;color:var(--dim);line-height:1.55;word-break:break-word}
+.snap-sec .li b{color:var(--txt)}
+.snap-sec .txt{color:var(--dim);line-height:1.7;white-space:pre-wrap;max-height:180px;overflow:auto}
+
+/* ---------- 手机 tab ---------- */
+.tabbar{display:none;background:#12141b;border-top:1px solid var(--line);flex:0 0 auto;padding-bottom:env(safe-area-inset-bottom)}
+.tabbar button{
+  flex:1;background:none;border:none;padding:10px 0 9px;font-size:12px;color:var(--dim2);
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+}
+.tabbar button.active{color:var(--gold)}
+.tabbar button svg{width:18px;height:18px;fill:currentColor}
+
+@media(max-width:1024px){
+  .pane-left{width:250px;flex-basis:250px}
+  .pane-right{width:240px;flex-basis:240px}
+}
+@media(max-width:860px){
+  .chips{display:none}
+  .tabbar{display:flex}
+  .layout{position:relative}
+  .pane{position:absolute;inset:0;width:100%!important;flex-basis:auto!important;border:none!important;display:none}
+  .pane.active{display:flex}
+  .chat{padding:12px 12px 4px}
+  .choice-bar{padding:0 12px 8px}
+  .input-bar{padding:8px 12px 8px}
+  .msg .av{display:none}
+  .bubble{font-size:14.5px}
+}
+
+/* ---------- 弹窗 ---------- */
+.modal{
+  position:fixed;inset:0;background:rgba(5,6,10,.78);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;padding:16px;z-index:100;
+}
+.modal.hidden{display:none}
+.sheet{
+  width:100%;max-width:620px;max-height:88vh;overflow:auto;background:#141722;
+  border:1px solid #2c3245;border-radius:16px;padding:18px 20px;
+}
+.sheet h3{margin:0 0 4px;font-size:16px;color:var(--gold)}
+.sheet .sub{color:var(--dim2);font-size:12px;margin-bottom:14px}
+.fld{margin-bottom:12px}
+.fld label{display:block;font-size:12px;color:var(--dim);margin-bottom:5px}
+.fld input,.fld select{
+  width:100%;background:#0f1118;border:1px solid var(--line);border-radius:9px;color:var(--txt);
+  padding:9px 11px;font:13.5px/1.4 inherit;outline:none;
+}
+.fld input:focus{border-color:#3a4560}
+.fld .hint{font-size:11px;color:var(--dim2);margin-top:4px;line-height:1.5}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sheet .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.sheet .acts button{background:#20242f;border:1px solid var(--line);border-radius:9px;padding:8px 14px;font-size:13px}
+.sheet .acts button.p{background:linear-gradient(180deg,#3a2f18,#2a2313);border-color:#5c4a24;color:var(--gold);font-weight:700}
+.sheet .acts button.d{opacity:.6}
+.sep{height:1px;background:var(--line);margin:14px 0}
+.note{font-size:11.5px;color:var(--dim2);line-height:1.7}
+.ta{width:100%;min-height:110px;background:#0f1118;border:1px solid var(--line);border-radius:9px;color:var(--txt);padding:10px;font:12.5px/1.6 ui-monospace,Consolas,monospace;outline:none}
+.toast{
+  position:fixed;left:50%;bottom:74px;transform:translateX(-50%) translateY(10px);
+  background:#1f2534;border:1px solid #38445e;color:var(--txt);padding:9px 16px;border-radius:22px;
+  font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:200;max-width:90vw;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.loading{display:inline-flex;gap:3px;align-items:center}
+.loading i{width:5px;height:5px;border-radius:50%;background:var(--gold);animation:bl 1s infinite}
+.loading i:nth-child(2){animation-delay:.15s}.loading i:nth-child(3){animation-delay:.3s}
+@keyframes bl{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">⚔ 跑团台<small>D&amp;D 5e · 单人</small></div>
+  <div class="chips">
+    <span class="chip" id="chipSave">未存档</span>
+    <span class="chip" id="chipCloud">云端未连</span>
+    <span class="chip" id="chipTimer">设定同步 --:--</span>
+  </div>
+  <div class="btns">
+    <button class="tbtn" id="btnArchive">存档</button>
+    <button class="tbtn primary" id="btnSettings">设置</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="pane pane-left active" id="paneLeft">
+    <div class="pane-title">状态面板 <span id="panelAt"></span></div>
+    <div id="panelCard"><div class="empty">尚未开局</div></div>
+    <div class="pane-title">角色卡</div>
+    <div id="charCard"><div class="empty">开局后自动同步</div></div>
+  </aside>
+
+  <main class="pane pane-main active" id="paneChat">
+    <div class="chat" id="chat"></div>
+    <div class="choice-bar" id="choiceBar"></div>
+    <form class="input-bar" id="inputForm">
+      <textarea id="input" rows="1" placeholder="描述你的行动，或点击右侧元指令…"></textarea>
+      <button class="send" id="btnSend" type="submit">发送</button>
+    </form>
+  </main>
+
+  <aside class="pane pane-right" id="paneRight">
+    <div class="pane-title">元指令 · 侧栏常驻</div>
+    <div class="meta-cmds" id="metaCmds"></div>
+    <div class="rule-q">
+      <input id="ruleQ" placeholder="规则关键词，如 专注 / 力竭">
+      <button id="ruleBtn">/规则</button>
+    </div>
+    <div class="pane-title">设定快照 <span id="snapTime">每小时自动加固</span></div>
+    <div class="snapshot" id="snapshot"><div class="empty">尚未生成</div></div>
+  </aside>
+</div>
+
+<nav class="tabbar" id="tabbar">
+  <button data-tab="paneChat" class="active"><svg viewBox="0 0 24 24"><path d="M4 4h16v12H7l-3 3z"/></svg>剧情</button>
+  <button data-tab="paneLeft"><svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 1-4.5 4.3 1 6.2L12 16.7 6.5 19.5l1-6.2L3 9l6-1z"/></svg>状态</button>
+  <button data-tab="paneRight"><svg viewBox="0 0 24 24"><path d="M3 5h18v3H3zM3 10.5h18v3H3zM3 16h18v3H3z"/></svg>指令</button>
+</nav>
+
+<!-- 设置弹窗 -->
+<div class="modal hidden" id="modal">
+  <div class="sheet">
+    <h3>跑团台设置</h3>
+    <div class="sub">模型接口、自动加固与云端存档。密钥仅存本机浏览器，不写入存档、不上云。</div>
+
+    <div class="fld">
+      <label>接口地址（OpenAI 兼容 /chat/completions）</label>
+      <input id="setBase" placeholder="https://api.deepseek.com/v1">
+      <div class="hint">DeepSeek / OpenAI / 硅基流动 / 本地 Ollama 等兼容接口均可。</div>
+    </div>
+    <div class="row2">
+      <div class="fld"><label>模型名</label><input id="setModel" placeholder="deepseek-chat"></div>
+      <div class="fld"><label>温度</label><input id="setTemp" type="number" step="0.1" min="0" max="2"></div>
+    </div>
+    <div class="fld">
+      <label>API Key</label>
+      <input id="setKey" type="password" placeholder="sk-...">
+      <div class="hint">仅保存在本机 localStorage。若接口不支持浏览器跨域，可用「手动模式」复制提示词到聊天网站跑。</div>
+    </div>
+
+    <div class="sep"></div>
+    <div class="fld">
+      <label>每小时自动加固设定</label>
+      <div class="row2">
+        <select id="setHourly">
+          <option value="1">开启（每小时重建设定快照）</option>
+          <option value="0">关闭</option>
+        </select>
+        <input id="setInterval" type="number" min="1" placeholder="间隔分钟，默认 60">
+      </div>
+      <div class="hint">每到间隔点把近期剧情压缩成「设定快照」（人物/物品/任务/线索/已学规则），并注入后续每次对话的系统提示，防止长团丢设定。</div>
+    </div>
+
+    <div class="sep"></div>
+    <div class="fld">
+      <label>云端存档（手机与电脑互通）</label>
+      <select id="setCloud">
+        <option value="jsonblob">内置云存档（jsonblob，免注册）</option>
+        <option value="custom">自定义接口（GET/PUT 整份 JSON）</option>
+        <option value="off">仅本机 + 存档码</option>
+      </select>
+      <div class="hint">存档房间号在「存档」面板里生成 / 填入；两端填同一个房间号即可互通。</div>
+    </div>
+    <div class="fld" id="fldCustom" style="display:none">
+      <label>自定义存档接口 URL</label>
+      <input id="setEndpoint" placeholder="https://your-server/save/user-device-id.json">
+    </div>
+
+    <div class="acts">
+      <button class="p" id="btnSaveSet">保存设置</button>
+      <button id="btnCloseSet">关闭</button>
+      <button id="btnManual">手动模式说明</button>
+    </div>
+  </div>
+</div>
+
+<!-- 存档弹窗 -->
+<div class="modal hidden" id="archModal">
+  <div class="sheet">
+    <h3>存档 / 读档</h3>
+    <div class="sub">自动存档持续进行；这里用于换设备、备份与恢复。</div>
+
+    <div class="fld">
+      <label>云端房间号（两端填同一个即可互通）</label>
+      <div class="row2">
+        <input id="roomId" placeholder="点右侧生成，或粘贴别人的房间号">
+        <button class="tbtn" id="btnRoomGen" style="margin:0">生成</button>
+      </div>
+      <div class="hint" id="cloudState">未连接云端</div>
+    </div>
+    <div class="acts" style="margin-top:10px">
+      <button class="p" id="btnCloudPush">上传到云</button>
+      <button id="btnCloudPull">从云读取</button>
+      <button id="btnCloudAuto">开启自动同步</button>
+    </div>
+
+    <div class="sep"></div>
+    <div class="fld">
+      <label>存档码（全量文本，可发到手机粘贴读取）</label>
+      <textarea class="ta" id="saveCode" placeholder="点下方生成…"></textarea>
+    </div>
+    <div class="acts">
+      <button class="p" id="btnGenCode">生成存档码</button>
+      <button id="btnLoadCode">从存档码读档</button>
+      <button id="btnExport">导出 .json 文件</button>
+      <button id="btnImport">导入 .json 文件</button>
+    </div>
+    <div class="sep"></div>
+    <div class="acts">
+      <button id="btnCloseArch">关闭</button>
+      <button id="btnReset" style="color:#e05a5a;border-color:#5a2b2b">清空本机存档</button>
+    </div>
+    <div class="note" style="margin-top:10px">提示：手机与电脑要真正互通，网页需放在同一可访问地址（同一静态托管，或电脑起本地服务后用局域网 IP 访问），再填同一个房间号。</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="text/plain" id="ruleset"># D&D 5e 单人跑团DM 指令包
+
+复制粘贴即玩 · 可存档续跑 · 5e 规则内置
+
+适用：DeepSeek 等 AI 对话 ｜ 附应急最小内核（长团防遗忘）
+
+总则 · 检定骰点 · 角色创建 · 记录面板 · 战斗 · 休息恢复 · 成长奖励 · 经济交易 · 叙事世界 · 元指令 ｜ 附录速查表 · 应急最小内核
+
+**文件说明（此段不粘贴给 AI）**
+
+**使用方式**：把下方两条分隔线之间的全部内容作为「系统提示词」或会话开场消息发给 AI。AI 回复「欢迎来到游戏」即装载成功。
+
+**续跑方式**：开新对话时，把本指令包 + 最近一次 /存档 生成的存档块一起粘贴，即可无缝接续。
+
+**长团防遗忘**：AI 开始丢设定时，开新对话直接改贴文末「应急最小内核」段 + 最近一次 /存档 的存档块，即可满血续跑。
+
+**━━━━━━━━━━━━ 以下全部粘贴给 AI ━━━━━━━━━━━━**
+
+### 【最高优先级 · 五条铁律】
+
+（本块与后文冲突时，以本块为准）
+
+1. **规则基准**：一切裁定以 D&D 第五版（5e）规则为准——六项属性、熟练加值、d20 检定、优势/劣势、动作经济、法术位、短休/长休、豁免、AC 与伤害类型。5e 与"剧情需要"冲突时永远以 5e 优先；正文标注【房规】的条款为例外，以本文档为准。
+
+2. **骰点公开**：所有骰子由你投掷并写出逐骰明细（如 3d6 → [4, 2, 6] = 12），攻击与伤害分开投；禁止改骰、重骰、暗改结果。若我开启自掷模式（见 B9），则由我报骰点、你负责结算。
+
+3. **选项必编号**：凡需我做选择之处（种族、法术、任务、路线、对话回应），必须完整列出全部选项并编号，禁止用"我推荐"代替列表；我也可随时直接输入自定义答案。
+
+4. **行为边界**：禁止替我做决定或行动（"你走上前去打开了门"属违规）；禁止让我在不知情的情况下承受后果；禁止用"命运注定""剧情需要"绕过规则；禁止大段无互动独白——每次叙述后必须交还行动权并给出可选动作。
+
+5. **面板必出**：每次回复末尾必须附状态面板（模板见 D1），无变化也要输出。
+
+## 一、总则 · DM 的身份与立场
+
+- A1 身份：你是我的地下城主（DM）——构建世界、扮演全部 NPC、裁定规则、推动剧情。你不是我的对手，而是共同讲故事的裁判与合作者。
+- A2 规则要点：法术需要法术位才能施放；法术与陷阱的豁免 DC = 8 + 施法者熟练加值 + 施法属性调整值。
+- A3 想象力与趣味：你要有趣、有梗、有画面感；允许适度玩梗，但不得破坏沉浸感。禁止机械复读规则条文——把规则包裹在叙事里说出来。
+- A4 绝对公平：不得因剧情需要暗中修改已公示的数值。检定失败就是失败，我不要求放水——惩罚（受伤、失去物品、惹上麻烦、错失机会）照实执行；成功也给足奖励，不得克扣。
+- A5 信息隔离：你掌握的信息 ≠ 角色掌握的信息。未经感知/调查检定的信息不得写进叙述；隐藏信息用暗骰（内部投点，只说"你隐约感觉到……"）。禁止告知怪物剩余 HP 精确值与陷阱位置，改用"它伤势不轻""地面似乎不对劲"这类描述。
+- A6 难度档位：开局让我选 [1] 轻松 [2] 标准 [3] 硬核 [4] 致命，决定 DC 整体偏移（-2 / 0 / +2 / +3）与敌人是否痛下杀手；游戏中可用 /难度 随时调整。
+
+## 二、检定与骰点
+
+- B1 一切事件皆可检定：故事里任何事——说服守卫、翻越围墙、辨认古文、察觉埋伏、追忆传说——都要转化为属性值检定。禁止"你说完他就同意了"这类跳过。
+- B2 公示格式（强制）：检定 = d20 + 属性调整值 + 熟练加值（若熟练）+ 其他加值。发起检定前必须先按固定格式公示，让我自行判断是否值得冒险：
+
+  ```
+  【检定】游说（魅力）
+  · 你的加值：魅力调整 +3，游说熟练 +2，合计 +5
+  · 难度 DC：15（一名警惕的城市卫兵，且你满身泥污 → 劣势）
+  · 成功：他放行，并顺口提醒你巷子里有动静
+  · 失败：他登记你的名字，全城哨卡会记住这张脸
+  · 是否进行？[1] 投！ [2] 换个说法（换用威吓/欺骗） [3] 放弃
+  ```
+
+- B3 DC 分级：极易 5 ｜ 简单 10 ｜ 中等 15 ｜ 困难 20 ｜ 极难 25 ｜ 近乎不可能 30。DC 必须依据上下文（环境、身心状态、先前的铺垫、我的角色背景）设定，不得随意跳档、不得前后矛盾。
+- B4 优势与劣势：环境或行为带来好处时给优势（投两次取高），不利时给劣势（取低）；优劣互相抵消，且无论来源多少都只叠加一次。你要主动提示"这个举动可以为你争取优势"。
+- B5 大成功与大失败（按 5e 原文）：
+  - 攻击检定自然 20：必然命中并重击（伤害骰翻倍，固定加值不翻倍）；自然 1：必然失手。
+  - 技能检定与豁免：按点数与 DC 正常比较，无自动成功或自动失败；但你要为极端点数描述出戏剧性的成功细节，或有趣的失误细节（摔跤、暴露行踪、惹怒对方）。
+  - 死亡豁免：自然 20 立即回复 1 HP 并恢复意识；自然 1 记两次失败。
+  - 【可选房规】若想玩博德之门 3 式"nat 20 技能必成 / nat 1 技能必败"，开局时告诉我是否启用。
+- B6 骰点规则见铁律 2。
+- B7 对抗检定与豁免：NPC 与我对抗时双方各投 d20 + 加值；法术与陷阱由我做属性豁免（DC 公式见 A2）；必须写明豁免成功/失败的差异后果。
+- B8 协助与团队：队友或 NPC 提供有效帮助时给我优势；你代管队友行动时，须说明其能力、动机是否合理，不得让队友抢走我的关键决策与高光时刻。
+- B9 玩家自掷骰（可选）：开局先问我用哪种模式——[1] 你代掷（默认）[2] 我自掷。我自掷时，你只出示「需要什么检定、加值明细、DC 与成败后果」，由我报骰点结果，你负责结算；我报出的骰点你须如实记录并结算，不得以"这不可能"为由修改或要求重投（除非我主动要求）。游戏中途可用 /自掷 随时切换，切换不影响已发生的剧情与已公示的结果。
+
+## 三、角色创建
+
+- C1 全列表编号：所有可选种族必须完整列出并编号，包括核心种族与常见拓展种族（人类、精灵及亚种、矮人及亚种、半身人、侏儒、半精灵、半兽人、龙裔、提夫林、鸟人等，视世界观补充），不得只推荐三四个。职业、子职业、背景同理。
+- C2 属性生成：三选一，不得替我决定——[1] 4d6 弃最低（掷 6 次，逐次公示骰点）[2] 标准数组 15 / 14 / 13 / 12 / 10 / 8 [3] 购点 27 点。结果逐项列出后，由我分配到六项属性上。
+- C3 法术与准备法表：可选戏法、已知法术、每日准备法表必须全部列出并编号，每条附一行效果说明与伤害/豁免类型，禁止用"我推荐你选 X"来省略列表。
+- C4 派生数值：自动生成并解释——最大 HP、AC（护甲 + 敏捷 + 盾牌）、先攻调整值、被动察觉（10 + 察觉加值）、被动调查、豁免熟练、速度、负重上限（力量 × 15 磅）。
+- C5 角色卡（长期维护）：用固定模板保存角色，并在状态面板中同步，至少包含：姓名 / 种族 / 职业 / 等级 / 阵营、六项属性与调整值、熟练项、HP、AC、速度、先攻、被动察觉、特性与专长、法术位与已知法术、物品、金币、语言、背景、理想·羁绊·缺点、经验值。
+- C6 开局流程（固定四步，缺一不可）：① 开局问卷：用一条消息列出以下全部选项并编号，我一次性答复——[a] 难度档位（A6）[b] 自掷模式（B9）[c] 是否启用 nat 20/1 房规（B5）[d] 成长节奏：经验表或里程碑（G3）[e] 3~5 个风格不同的开局钩子（世界与剧本）；② 生成属性（C2 三选一，结果由我分配）；③ 创建角色：种族 → 职业 → 子职业 → 背景 → 技能熟练 → 装备 → 法术，每一步全列表编号（C1 / C3）；④ 输出完整角色卡（C5）后，方可正式开场。
+
+## 四、记录 · 状态面板与长期记忆
+
+- D1 状态面板（每次回复强制输出，无变化也要输出）：
+
+  ```
+  ━━━━ 状态面板 ━━━━
+  ❤️ HP 24/28 🛡 AC 16 ⚡ 先攻 +3 👁 被动察觉 14
+  🔮 法术位 L1 3/4 · L2 2/2 🎯 生命骰 3/3 (d8)
+  💰 142 gp 🎒 负重 78/150 磅 ✨ 状态：正常
+  📍 绿橡镇 · 白银酒杯旅店 🕐 第 3 日 黄昏 · 小雨
+  👥 队伍：我 + 莉安娜（好感 60/100）
+  ```
+
+**面板规则：**模板中的数值与名字仅为占位示例，实际输出必须替换为当前真实数值；无队友时队伍行只输出「👥 队伍：单人」；队友与好感度仅在启用 D5 时出现。
+
+- D2 逐件物品登记：每件物品登记名称、类别、重量、价值、是否已装备、附魔与效果（如"火焰大剑：命中额外造成 1d4 火焰伤害"）；拾取、购买、出售、损坏、丢失即时更新并告知我。
+- D3 经验与升级追踪：记录当前 XP / 升级所需 XP / 进度百分比；达到阈值立即提示升级，并列出 HP 成长（含体质调整）、熟练加值变化、新特性 / 法术 / 专长（多选项全部编号列出）。
+- D4 关键记忆清单（持续维护，/记忆 可查）：已结识的 NPC（姓名、身份、性格、口癖、动机、对我的好感度）；已接取 / 完成 / 失败的任务与线索；我许下的承诺、欠下的人情、结下的仇怨；我做出的重大选择与造成的世界改变；已揭示的世界观设定与已知的机密。
+- D5 队伍与好感【可选】：队伍上限 4 人（含我），新伙伴随剧情自然引入，不得一次性塞满；记录队友职业、性格、动机与对我的好感度（0-100），我的言行真实改变好感度，过低会离队甚至背叛。
+- D6 世界时间推进【可选】：每次行动推进时间、天气、日期；长休、旅行、等待要明确时间流逝，让世界自行运转——NPC 会行动、谣言会传播、敌人不会原地等你。
+
+## 五、战斗
+
+- E1 先攻：战斗开始，你为所有参战者（含队友与 NPC）投先攻（d20 + 敏捷调整），按降序输出先攻顺序表，每轮提示当前回合归属。
+- E2 回合结构（动作经济）：每回合可用移动（等于速度）、1 个动作、1 个附赠动作、1 次反应、1 次免费互动；每轮结束提示我剩余可用资源。
+- E3 攻击与伤害：攻击 = d20 + 属性调整 + 熟练加值 vs 目标 AC；命中后投伤害骰，写明伤害类型（挥砍 / 穿刺 / 火焰等）与抗性、易伤、免疫的结算过程。
+- E4 状态效果：中毒、魅惑、恐惧、眩晕、麻痹、倒地、束缚、沉默等状态，须写明生效条件、持续轮数、豁免时机、解除方式，并在状态面板中标注。易忘要点：倒地 = 速度 0、5 尺内攻击它有优势；眩晕 = 无法行动且力量/敏捷豁免自动失败；专注 = 施法者受伤需体质豁免（DC 10 或伤害一半取高）维持法术。
+- E5 倒地与死亡豁免：HP 归零即倒地，每回合投一次死亡豁免（d20，10 以上记 1 次成功）：累计 3 次成功则稳定（1 HP，昏迷 1d4 小时），3 次失败则死亡。队友可用动作稳定伤势（医药 / 医疗包 DC 10）或施法救治；自然 20 / 自然 1 的处理见 B5。若最终真正死亡，新角色如何创建、是否继承部分 XP，由我们当时商定。
+- E6 撤退与追击：逃跑是合法选项，需通过敏捷（隐匿）或力量（运动）对抗检定；敌人依其智力与目标决定是否追击。战斗不必打到底。
+- E7 战斗节奏：禁止战斗连着战斗。战斗后留出喘息：治疗、搜刮、对话、进食、酒馆闲谈、温泉休整。建议每 2~3 次遭遇后至少提供一次短休或长休机会。
+
+## 六、休息与恢复
+
+- F1 短休（约 1 小时）：可消耗生命骰恢复 HP（投生命骰 + 体质调整）；部分职业特性（战士回气、术士法术位等）恢复。每次短休都要问我是否消耗生命骰、消耗几颗。
+- F2 长休（约 8 小时）：HP 全满、法术位全满、恢复总数一半（向下取整，至少 1 颗）的生命骰。地点须合理（旅店 / 营地 / 安全屋）；野外或有敌人骚扰时可能被打断。
+- F3 生命骰与力竭【可选】：生命骰上限等于等级；连续缺乏长休导致力竭时，按 5e 六级力竭表逐步施加惩罚（见附录 A3），并明确告知当前等级。
+
+## 七、成长 · 经验与奖励
+
+- G1 检定即奖励：成功通过检定给予 10~50 XP（按难度与重要性），大成功或精彩解法额外加成；战斗 XP 按 5e 挑战等级（CR）表结算并公示分摊过程。
+- G2 升级流程：升级时完整列出 HP 成长（含体质调整）、熟练加值变化、新获得的职业特性 / 法术 / 专长，并让我在多选项间做选择（全部编号列出）。
+- G3 成长节奏：默认按 5e 经验表推进（附录 A2）；也可选择里程碑模式（按剧情节点升级），由我在开局决定。
+- G4 声望与头衔【可选】：除 XP 外，按阵营 / 组织 / 地区分别记录声望值；声望影响物价、任务获取、NPC 态度，过高会招来关注，过低会招来赏金猎人。
+
+## 八、经济 · 物品与交易
+
+- H1 经济系统：采用 5e 标准物价（1 gp = 10 sp = 100 cp）。出售物品默认按标价一半；魅力（游说 / 威吓）检定成功可提升到 60%~100%，大成功还可能换来情报或稀有货源，失败则被压价甚至被怀疑是赃物。商店库存随地点、时间、声望变化并刷新。
+- H2 装备与法术效果设计：自创 / 掉落装备的效果必须量化并写清触发条件，例如"火焰大剑：命中时额外造成 1d4 火焰伤害；对冰霜系生物伤害翻倍"。禁止"它非常强大"这类模糊描述。
+- H3 负重（5e 变体规则）：总重量超过 力量 × 5 磅为累赘（速度 -10 尺）；超过 力量 × 10 磅为重度累赘（速度 -20 尺，且力量 / 敏捷 / 体质相关的属性检定、攻击检定与豁免获得劣势）。承重上限为 力量 × 15 磅，超过则无法正常携带。
+- H4 未鉴定物品【可选】：魔法物品默认未鉴定，需通过鉴定术、短休专注研究或付费请专家鉴定才可得知效果；也可冒险直接使用（可能触发意外效果）。
+- H5 消耗品与补给【可选】：食物、饮水、火把、箭矢、药剂、毒药等消耗品要记账并在使用时扣减；长途旅行需考虑补给与驮兽。
+
+## 九、叙事 · 世界与角色
+
+- I1 细节描写：叙事中加入感官细节（气味、声音、光线、温度）与 NPC 的动作、表情、语气。禁止只写"他说……"。
+- I2 角色一致性：NPC 的对话与行为必须符合其性格、职业、背景与当下处境。一个粗鲁的铁匠不会突然吟诗——除非有理由。
+- I3 支线任务：主线之外持续提供可选的支线任务（编号列出，标明难度、报酬、地点、是否限时）。接受或拒绝都会产生后果，错过也会真实过期。
+- I4 节奏调剂：紧张段落之间插入酒馆、旅馆、集市、温泉、节日、赌局、旅伴夜谈等轻松场景，给角色成长与社交的空间。
+- I5 选择与后果：我的选择必须真实改变世界：救下的人会回来报恩，放走的敌人会卷土重来，毁掉的桥会改变路线。禁止"无论怎么选剧情都一样"。
+- I6 失败同样是剧情：检定失败推进剧情而不是卡死剧情——失败带来新麻烦、新代价、新转机，而不是"你再做一次吧"。除非我明确换方法重试，否则同一件事不重复放行。
+- I7 叙事视角与篇幅：使用第二人称（"你……"），时态保持一致。单次回复建议 300~600 字叙事 + 状态面板 + 选项；长场景可分段，但每段结尾都要把行动权交还给我。
+
+## 十、互动接口 · 元指令
+
+- J1 选项规则见铁律 3。
+- J2 元指令表（我随时可用，你必须立即响应）：
+
+| 指令 | 作用 |
+|---|---|
+| /状态 | 输出完整状态面板与角色卡 |
+| /物品 | 列出全部物品与附魔明细 |
+| /任务 | 列出进行中 / 已完成 / 失败的任务与线索 |
+| /人物 | 列出已结识 NPC 与好感度 |
+| /存档 | 生成完整存档块（角色卡 + 物品 + 任务 + 世界状态 + 剧情摘要），供新会话续跑 |
+| /读档 | 我粘贴存档块后，你据此恢复全部状态并继续 |
+| /回退 | 撤销上一步行动及其后果，回到分支点（已公开的信息与已公示的骰点不可收回，防止刷情报） |
+| /规则 关键词 | 查询当前生效的 5e 规则原文与你的裁定依据 |
+| /难度 轻松·标准·硬核·致命 | 调整整体 DC 偏移与致死性 |
+| /自掷 | 切换骰子由我自掷 / 由你代掷 |
+| /暂停 | 暂停叙事，进入纯问答模式讨论规则与计划 |
+| /总结 | 输出至今为止的分章节剧情摘要 |
+| /记忆 | 输出你维护的全部长期记忆清单 |
+
+- J3 中途改规则与设定：我会随时加入新规则、更改角色设定、扭转剧情走向。你必须：① 复述确认我做的改动；② 写入长期记忆；③ 在改动后的条件下继续推进——不得回滚，不得装作没发生过。
+- J4 纠错与学习：当我指出某次检定用错了属性或规则时，你要：承认错误 → 说明正确做法 → 重做该检定（若尚未产生不可逆后果）→ 记入"已学到的规则"，后续不再犯。
+
+## 附录 A · 常用速查表
+
+- A1 熟练加值：1~4 级 +2 ｜ 5~8 级 +3 ｜ 9~12 级 +4 ｜ 13~16 级 +5 ｜ 17~20 级 +6
+- A2 升级所需累计经验（XP）：
+
+| 等级 | XP | 等级 | XP | 等级 | XP |
+|---|---|---|---|---|---|
+| 2 | 300 | 8 | 34,000 | 14 | 140,000 |
+| 3 | 900 | 9 | 48,000 | 15 | 165,000 |
+| 4 | 2,700 | 10 | 64,000 | 16 | 195,000 |
+| 5 | 6,500 | 11 | 85,000 | 17 | 225,000 |
+| 6 | 14,000 | 12 | 100,000 | 18 | 265,000 |
+| 7 | 23,000 | 13 | 120,000 | 19 | 305,000 |
+| — | — | — | — | 20 | 355,000 |
+
+- A3 力竭等级效果：1 能力检定劣势 ｜ 2 速度减半 ｜ 3 攻击检定与豁免劣势 ｜ 4 生命值上限减半 ｜ 5 速度降至 0 ｜ 6 死亡
+
+完整理解以上全部条款后，请只回复一句——「欢迎来到游戏」。
+
+━━━━━━━━━━━━ 粘贴至此 ━━━━━━━━━━━━
+
+## 附：应急最小内核（此段不随全文粘贴）
+
+使用时机：长团跑到后期，AI 明显开始丢设定（忘物品、忘任务、忘法术位）时，开一个新对话，把下面这段 + 最近一次 /存档 生成的存档块一起粘贴，即可满血续跑。正常情况请用全文。
+
+### 【最高优先级 · 五条铁律】
+
+（本块与后文冲突时，以本块为准）
+
+1. **规则基准**：一切裁定以 D&D 第五版（5e）规则为准——六项属性、熟练加值、d20 检定、优势/劣势、动作经济、法术位、短休/长休、豁免、AC 与伤害类型。5e 与"剧情需要"冲突时永远以 5e 优先；标注【房规】的条款为例外，以本文档为准。
+
+2. **骰点公开**：所有骰子由你投掷并写出逐骰明细（如 3d6 → [4, 2, 6] = 12），攻击与伤害分开投；禁止改骰、重骰、暗改结果。（若我在用自掷模式，则由我报骰点、你负责结算。）
+
+3. **选项必编号**：凡需我做选择之处（种族、法术、任务、路线、对话回应），必须完整列出全部选项并编号，禁止用"我推荐"代替列表；我也可随时直接输入自定义答案。
+
+4. **行为边界**：禁止替我做决定或行动；禁止让我在不知情的情况下承受后果；禁止用"命运注定""剧情需要"绕过规则；禁止大段无互动独白——每次叙述后必须交还行动权并给出可选动作。
+
+5. **面板必出**：每次回复末尾必须附状态面板，无变化也要输出。
+
+### 【检定公式与公示格式（强制）】
+
+检定 = d20 + 属性调整值 + 熟练加值（若熟练）+ 其他加值。发起检定前必须先公示：你的加值明细、难度 DC（含优劣及原因）、成功与失败各自后果，并以 [1] 投！ [2] 换个说法 [3] 放弃 让我选择。DC 参考：极易 5 ｜ 简单 10 ｜ 中等 15 ｜ 困难 20 ｜ 极难 25 ｜ 近乎不可能 30，须依据上下文合理设定。自然 20 / 自然 1 仅对攻击检定必中 / 必失（重击伤害骰翻倍）；死亡豁免自然 20 回 1 HP、自然 1 记两次失败；技能检定与豁免无自动成败。
+
+### 【状态面板（每次回复末尾强制输出）】
+
+```
+━━━━ 状态面板 ━━━━
+❤️ HP __/__ 🛡 AC __ ⚡ 先攻 +_ 👁 被动察觉 __
+🔮 法术位 L_ _/_ 🎯 生命骰 _/_ (d_)
+💰 __ gp 🎒 负重 __/__ 磅 ✨ 状态：__
+📍 __ 🕐 第 _ 日 __
+👥 队伍：__
+```
+
+### 【元指令（随时可用，立即响应）】
+
+/状态 /物品 /任务 /人物 /存档 /读档 /回退 /规则 关键词 /难度 /自掷 /暂停 /总结 /记忆——含义与全文 J2 相同。
+
+### 【记录要求】
+
+逐件登记物品（名称/重量/价值/附魔效果，变动即时更新）；追踪 XP 与升级；维护关键记忆（NPC、任务线索、承诺、仇怨、世界改变）；检定失败推进剧情而非卡死；失败照常惩罚、成功给足奖励；队友上限 4 人；选项永远完整编号；面板队伍行：无队友时只写「单人」。恢复全部状态后，请只回复一句——「欢迎回来，继续冒险」。</script>
+<script>
+/* ================= 基础 ================= */
+const RULES = document.getElementById('ruleset').textContent.trim();
+const LS = 'dnd_runner_state_v1';
+const LS_KEY = 'dnd_runner_apikey_v1';
+const $ = s => document.querySelector(s);
+const el = (t, c, h) => { const d = document.createElement(t); if (c) d.className = c; if (h != null) d.innerHTML = h; return d; };
+
+const META = [
+  ['/状态', '输出完整状态面板与角色卡'],
+  ['/物品', '列出全部物品与附魔明细'],
+  ['/任务', '列出任务与线索'],
+  ['/人物', '列出 NPC 与好感度'],
+  ['/存档', '生成完整存档块'],
+  ['/读档', '粘贴存档块后恢复'],
+  ['/回退', '撤销上一步行动'],
+  ['/规则', '查询 5e 规则原文与裁定'],
+  ['/难度', '轻松/标准/硬核/致命'],
+  ['/自掷', '切换骰子由我自掷'],
+  ['/暂停', '转纯问答讨论模式'],
+  ['/总结', '输出分章节剧情摘要'],
+  ['/记忆', '输出长期记忆清单']
+];
+
+const S = (function () {
+  const d = load() || {};
+  const defSet = {
+    baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat',
+    temp: 0.9, hourly: true, intervalMin: 60, cloud: 'jsonstorage',
+    endpoint: '', roomId: '', autoSync: true, lastCompress: 0
+  };
+  return {
+    messages: d.messages || [],
+    panel: d.panel || '',
+    panelAt: d.panelAt || 0,
+    snapshot: Object.assign({ summary: '', npcs: [], quests: [], items: [], learned: [], world: '', at: 0 }, d.snapshot || {}),
+    settings: Object.assign(defSet, d.settings || {}),
+    meta: Object.assign({ started: 0, lastSave: 0, cloudAt: 0 }, d.meta || {})
+  };
+})();
+
+function load() {
+  try { const r = localStorage.getItem(LS); return r ? JSON.parse(r) : null; } catch (e) { return null; }
+}
+function saveLocal(silent) {
+  S.meta.lastSave = Date.now();
+  try {
+    localStorage.setItem(LS, JSON.stringify(S));
+    if (!silent) { setChip('chipSave', '已存本机 ' + hhmm(new Date()), 'ok'); toast('已存档到本机'); }
+    else setChip('chipSave', '已存本机 ' + hhmm(new Date()), 'ok');
+  } catch (e) { setChip('chipSave', '本机存档失败', 'err'); }
+}
+function apiKey() { try { return localStorage.getItem(LS_KEY) || ''; } catch (e) { return ''; } }
+function toast(t) { const n = $('#toast'); n.textContent = t; n.classList.add('show'); clearTimeout(n._t); n._t = setTimeout(() => n.classList.remove('show'), 2200); }
+function setChip(id, text, cls) { const n = document.getElementById(id); if (!n) return; n.textContent = text; n.className = 'chip' + (cls ? ' ' + cls : ''); }
+function hhmm(d) { return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+/* ================= Markdown 轻渲染 ================= */
+function md(src) {
+  const blocks = [];
+  let s = String(src).replace(/```([\s\S]*?)```/g, (m, p) => {
+    blocks.push('<pre>' + esc(p.replace(/^\n/, '')) + '</pre>');
+    return '\u0000B' + (blocks.length - 1) + '\u0000';
+  });
+  s = esc(s);
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+  s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+  s = s.replace(/^#{1,6}\s*(.+)$/gm, '<strong>$1</strong>');
+  s = s.replace(/^&gt;\s?(.*)$/gm, '<span style="color:#9aa3b8">│ $1</span>');
+  s = s.split('\n').map(l => {
+    if (/^\s*[-*]\s+/.test(l)) return '· ' + l.replace(/^\s*[-*]\s+/, '');
+    return l;
+  }).join('\n');
+  s = s.replace(/^━━[^\n]*$/gm, m => '<span class="panel-line">' + m + '</span>');
+  s = s.replace(/\n/g, '<br>');
+  s = s.replace(/\u0000B(\d+)\u0000/g, (m, i) => blocks[i]);
+  return s;
+}
+
+/* ================= 状态面板解析 ================= */
+function parsePanel(txt) {
+  if (!txt) return null;
+  const g = (re, d) => { const m = txt.match(re); return m ? (m[1] || '').trim() : (d || ''); };
+  const hp = g(/HP\s*(\d+\s*\/\s*\d+)/i) || g(/(\d+\s*\/\s*\d+)/);
+  let hpn = 0, hpm = 0;
+  if (hp) { const p = hp.split('/').map(x => parseInt(x.trim(), 10)); hpn = p[0] || 0; hpm = p[1] || 0; }
+  return {
+    hp, hpn, hpm,
+    ac: g(/AC\s*(\d+)/i),
+    init: g(/先攻\s*\+?(-?\d+)/),
+    passive: g(/被动察觉\s*(\d+)/),
+    spell: g(/法术位\s*([^\n🎯💰✨🕐👥]*)/),
+    dice: g(/生命骰\s*([^\n💰✨🕐👥]*)/),
+    gold: g(/([\d,]+)\s*gp/i),
+    load: g(/负重\s*([^\n✨🕐👥]*)/),
+    stat: g(/状态[：:]\s*([^\n]*)/),
+    place: g(/📍\s*([^\n🕐👥]*)/),
+    time: g(/🕐\s*([^\n👥]*)/),
+    party: g(/队伍[：:]\s*([^\n]*)/)
+  };
+}
+
+function extractPanel(text) {
+  if (!text) return '';
+  const i = text.search(/━+\s*状态面板\s*━+/);
+  if (i < 0) { const j = text.search(/状态面板/); if (j < 0) return ''; }
+  const start = i >= 0 ? i : text.search(/状态面板/);
+  let tail = text.slice(start);
+  const cut = tail.search(/\n\s*\n(?!━)/);
+  if (cut > 30) tail = tail.slice(0, cut);
+  return tail.trim();
+}
+
+function renderPanel() {
+  const box = $('#panelCard');
+  const p = parsePanel(S.panel);
+  if (!p || !S.panel) { box.innerHTML = '<div class="empty">尚未开局</div>'; return; }
+  const pct = p.hpm ? Math.max(0, Math.min(100, p.hpn / p.hpm * 100)) : 0;
+  let h = '<div class="panel-grid">';
+  const cell = (k, v, cls) => v ? `<div class="pcell"><div class="k">${k}</div><div class="v ${cls || ''}">${esc(v)}</div></div>` : '';
+  h += cell('HP', p.hp, 'hp'); h += cell('AC', p.ac, 'ac');
+  h += cell('先攻', p.init ? ('+' + p.init.replace(/^\+/, '')) : ''); h += cell('被动察觉', p.passive);
+  h += '</div>';
+  if (p.hpm) h += `<div class="pbar"><i style="width:${pct}%"></i></div>`;
+  if (p.spell) h += `<div class="prow">🔮 法术位 <b>${esc(p.spell)}</b></div>`;
+  if (p.dice) h += `<div class="prow">🎯 生命骰 <b>${esc(p.dice)}</b></div>`;
+  if (p.gold || p.load) h += `<div class="prow">💰 <b>${esc(p.gold)} gp</b>　🎒 <b>${esc(p.load || '—')}</b></div>`;
+  if (p.stat) h += `<div class="prow">✨ 状态：<b>${esc(p.stat)}</b></div>`;
+  if (p.place || p.time) h += `<div class="prow">📍 <b>${esc(p.place || '—')}</b><br>🕐 ${esc(p.time || '—')}</div>`;
+  if (p.party) h += `<div class="prow">👥 <b>${esc(p.party)}</b></div>`;
+  h += `<div class="prow" style="color:#6f7688;font-size:11px">更新于 ${S.panelAt ? hhmm(new Date(S.panelAt)) : '—'}</div>`;
+  box.innerHTML = h;
+  $('#panelAt').textContent = S.panelAt ? hhmm(new Date(S.panelAt)) : '';
+}
+
+/* 从最近 DM 回复里抓角色卡信息（姓名/种族/职业等） */
+function renderChar() {
+  const box = $('#charCard');
+  const all = S.messages.filter(m => m.role === 'assistant').map(m => m.content).join('\n');
+  const pick = (re) => { const m = all.match(re); return m ? m[1].trim() : ''; };
+  const rows = [
+    ['姓名', pick(/姓名[：:]\s*([^\n|｜，,]{1,20})/)],
+    ['种族', pick(/种族[：:]\s*([^\n|｜，,]{1,24})/)],
+    ['职业', pick(/职业[：:]\s*([^\n|｜，,（(]{1,24})/)],
+    ['等级', pick(/等级[：:]\s*(\d+)/)],
+    ['阵营', pick(/阵营[：:]\s*([^\n|｜，,]{1,20})/)],
+    ['背景', pick(/背景[：:]\s*([^\n|｜，,]{1,24})/)]
+  ].filter(r => r[1]);
+  const attrs = ['力量', '敏捷', '体质', '智力', '感知', '魅力']
+    .map(a => { const m = all.match(new RegExp(a + '[^\\n]{0,6}?(\\d{1,2})')); return m ? a + ' ' + m[1] : ''; })
+    .filter(Boolean);
+  if (!rows.length && !attrs.length) { box.innerHTML = '<div class="empty">开局后自动同步</div>'; return; }
+  let h = '<div class="char-block">';
+  rows.forEach(r => h += `<div class="cl"><span>${r[0]}</span><b>${esc(r[1])}</b></div>`);
+  if (attrs.length) h += `<div class="cl"><span>属性</span><b style="font-size:12px">${esc(attrs.join(' · '))}</b></div>`;
+  h += '</div>';
+  box.innerHTML = h;
+}
+
+/* ================= 渲染快照 ================= */
+function renderSnapshot() {
+  const box = $('#snapshot'), sn = S.snapshot || {};
+  const has = (sn.summary || '').trim() || (sn.npcs || []).length || (sn.quests || []).length || (sn.items || []).length;
+  if (!has) { box.innerHTML = '<div class="empty">尚未生成，跑一段剧情后自动加固</div>'; return; }
+  let h = '';
+  if (sn.summary) h += `<div class="snap-sec"><h4>剧情摘要</h4><div class="txt">${esc(sn.summary)}</div></div>`;
+  const list = (title, arr, fmt) => {
+    if (!arr || !arr.length) return '';
+    return `<div class="snap-sec"><h4>${title} · ${arr.length}</h4>` +
+      arr.map(x => `<div class="li">${fmt(x)}</div>`).join('') + '</div>';
+  };
+  h += list('NPC', sn.npcs, x => typeof x === 'string' ? esc(x) : `<b>${esc(x.name || '')}</b> ${esc(x.note || x.desc || '')}`);
+  h += list('任务线索', sn.quests, x => typeof x === 'string' ? esc(x) : `<b>${esc(x.title || x.name || '')}</b> ${esc(x.state || '')} ${esc(x.note || '')}`);
+  h += list('物品', sn.items, x => typeof x === 'string' ? esc(x) : `<b>${esc(x.name || '')}</b> ${esc(x.effect || x.note || '')}`);
+  h += list('已学规则', sn.learned, x => esc(typeof x === 'string' ? x : JSON.stringify(x)));
+  if (sn.world) h += `<div class="snap-sec"><h4>世界状态</h4><div class="txt">${esc(sn.world)}</div></div>`;
+  box.innerHTML = h;
+  $('#snapTime').textContent = sn.at ? '更新于 ' + hhmm(new Date(sn.at)) : '';
+}
+
+/* ================= 对话渲染 ================= */
+function addMsg(role, content, opts) {
+  const chat = $('#chat');
+  const wrap = el('div', 'msg ' + role);
+  const av = el('div', 'av', role === 'user' ? '🧭' : role === 'dm' ? '🎲' : '⚙');
+  const body = el('div', 'body');
+  const who = role === 'user' ? '你' : role === 'dm' ? 'DM' : '系统';
+  body.appendChild(el('div', 'who', who));
+  const b = el('div', 'bubble');
+  if (role === 'dm') b.innerHTML = md(content); else b.innerHTML = esc(content).replace(/\n/g, '<br>');
+  body.appendChild(b);
+  wrap.appendChild(av); wrap.appendChild(body);
+  chat.appendChild(wrap);
+  if (!opts || !opts.noScroll) chat.scrollTop = chat.scrollHeight;
+  return b;
+}
+function renderAll() {
+  $('#chat').innerHTML = '';
+  if (!S.messages.length) welcome();
+  S.messages.forEach(m => {
+    if (m.role === 'user') addMsg('user', m.content, { noScroll: true });
+    else if (m.role === 'assistant') addMsg('dm', m.content, { noScroll: true });
+    else if (m.role === 'sys') addMsg('sys', m.content, { noScroll: true });
+  });
+  renderChoices();
+  $('#chat').scrollTop = $('#chat').scrollHeight;
+}
+function welcome() {
+  addMsg('sys', '跑团台已就绪。点右上「设置」填入模型接口与 Key，然后直接说「开始游戏」，DM 会按指令包 C6 流程给你开局问卷（难度档位 / 自掷模式 / 房规 / 成长节奏 / 开局钩子）。\n没有 Key 也能玩：设置里打开「手动模式说明」，复制提示词到任意 AI 对话框跑，再把回复粘回来。');
+}
+
+/* 选项解析与渲染 */
+function lastDm() {
+  for (let i = S.messages.length - 1; i >= 0; i--) if (S.messages[i].role === 'assistant') return S.messages[i].content;
+  return '';
+}
+function renderChoices() {
+  const bar = $('#choiceBar'); bar.innerHTML = '';
+  const t = lastDm(); if (!t) return;
+  const tailStart = Math.max(0, t.length - 1400);
+  const tail = t.slice(tailStart);
+  const found = [], seen = new Set();
+  const re = /\[(\d{1,2})\]\s*([^\n\[]+)/g;
+  let m;
+  while ((m = re.exec(tail))) {
+    const n = m[1], txt = m[2].trim().replace(/[；;，,]+$/, '');
+    if (!txt || txt.length > 60 || seen.has(n)) continue;
+    seen.add(n); found.push({ n, txt });
+  }
+  found.slice(0, 8).forEach(({ n, txt }) => {
+    const btn = el('button', 'choice', `<i>${n}</i>${esc(txt)}`);
+    btn.onclick = () => send(`[${n}] ${txt}`);
+    bar.appendChild(btn);
+  });
+}
+
+/* ================= 系统提示构建 ================= */
+function buildSystem() {
+  const sn = S.snapshot || {};
+  const snBlock = (sn.summary || (sn.npcs || []).length) ? `
+【长期设定快照 · 系统每 ${S.settings.intervalMin} 分钟自动重建，以下为此前剧情的权威记录，优先级高于你的记忆】
+- 剧情摘要：${sn.summary || '（暂无）'}
+- 世界状态：${sn.world || '（暂无）'}
+- 已结识 NPC：${(sn.npcs || []).map(x => typeof x === 'string' ? x : `${x.name}（${x.note || ''}）`).join('；') || '（暂无）'}
+- 任务与线索：${(sn.quests || []).map(x => typeof x === 'string' ? x : `${x.title || x.name}（${x.state || ''} ${x.note || ''}）`).join('；') || '（暂无）'}
+- 物品清单：${(sn.items || []).map(x => typeof x === 'string' ? x : `${x.name}（${x.effect || x.note || ''}）`).join('；') || '（暂无）'}
+- 已学到的规则纠正：${(sn.learned || []).join('；') || '（暂无）'}
+- 最近状态面板：${S.panel ? S.panel.replace(/\n/g, ' / ') : '（暂无）'}
+【快照结束】` : '';
+
+  return `${RULES}
+
+━━━━━━━━━━━━ 网页运行约定（叠加于上方指令包之上，不降低其优先级） ━━━━━━━━━━━━
+1. 你正在一个网页跑团台中担任 DM，用户通过网页与你交互，双方共享同一份存档。指令包中的全部条款（五条铁律、检定公示、编号选项、面板必出、元指令响应）在网页中同样强制生效。
+2. 状态面板固定格式：每次回复末尾以「━━━━ 状态面板 ━━━━」独占一行开头，随后按 D1 模板输出，面板内不要使用 markdown 表格，每行一条，便于网页自动解析成仪表盘。
+3. 选项固定格式：需要用户选择时，每个选项独占一行，格式为「[1] 选项内容」「[2] 选项内容」，网页会把它渲染成可点击按钮；不要在选项行内再嵌套编号。
+4. 长团防遗忘：系统会周期性把剧情压缩成「设定快照」注入给你。凡与快照冲突处，一律以快照与最近状态面板为准；快照未提及但存档中出现的内容，按存档处理。你自己也要持续维护 D4 关键记忆。
+5. 元指令：用户可能用网页侧栏一键发送 /状态 /物品 /任务 /人物 /存档 /读档 /回退 /规则 /难度 /自掷 /暂停 /总结 /记忆，收到即立刻按 J2 响应，不需要复述指令本身。
+6. 回复篇幅：300~600 字叙事 + 状态面板 + 编号选项；每段结尾交还行动权。
+${snBlock}`;
+}
+
+/* ================= API 调用 ================= */
+async function callAI(messages, opt) {
+  const st = S.settings;
+  const key = apiKey();
+  if (!key) throw new Error('未填写 API Key（右上角设置）');
+  let url = (st.baseUrl || '').replace(/\s/g, '').replace(/\/+$/, '');
+  if (!/\/chat\/completions$/.test(url)) url += '/chat/completions';
+  const stream = !(opt && opt.noStream);
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify({
+      model: st.model || 'deepseek-chat',
+      messages,
+      temperature: (opt && opt.temp != null) ? opt.temp : (st.temp != null ? st.temp : 0.9),
+      stream
+    })
+  });
+  if (!res.ok) {
+    let t = ''; try { t = await res.text(); } catch (e) { }
+    throw new Error('接口返回 ' + res.status + '：' + t.slice(0, 260));
+  }
+  if (!stream) { const j = await res.json(); return (j.choices && j.choices[0] && j.choices[0].message.content) || ''; }
+  const reader = res.body.getReader(), dec = new TextDecoder();
+  let buf = '', out = '';
+  while (true) {
+    const r = await reader.read();
+    if (r.done) break;
+    buf += dec.decode(r.value, { stream: true });
+    const lines = buf.split('\n'); buf = lines.pop();
+    for (const line of lines) {
+      const l = line.trim();
+      if (!l.startsWith('data:')) continue;
+      const d = l.slice(5).trim();
+      if (d === '[DONE]') continue;
+      try {
+        const j = JSON.parse(d);
+        const t = (j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.content) || '';
+        if (t) { out += t; if (opt && opt.onDelta) opt.onDelta(out); }
+      } catch (e) { }
+    }
+  }
+  return out;
+}
+
+/* ================= 发送主流程 ================= */
+let busy = false;
+async function send(text) {
+  if (busy) return;
+  const t = (text != null ? text : $('#input').value).trim();
+  if (!t) return;
+  if (text == null) { $('#input').value = ''; $('#input').style.height = '46px'; }
+  addMsg('user', t);
+  S.messages.push({ role: 'user', content: t, ts: Date.now() });
+  renderChoices();
+
+  const isCmd = /^\/读档/.test(t);
+  if (isCmd) { setBusy(true); await doLoadFromPaste(t); setBusy(false); return; }
+
+  setBusy(true);
+  const bub = addMsg('dm', '');
+  bub.innerHTML = '<span class="loading"><i></i><i></i><i></i></span>';
+  try {
+    const ctx = [{ role: 'system', content: buildSystem() }].concat(
+      S.messages.filter(m => m.role !== 'sys').slice(-40).map(m => ({ role: m.role, content: m.content }))
+    );
+    const out = await callAI(ctx, { onDelta: (full) => { bub.innerHTML = md(full) ; $('#chat').scrollTop = $('#chat').scrollHeight; } });
+    if (!out.trim()) throw new Error('模型返回为空');
+    S.messages.push({ role: 'assistant', content: out, ts: Date.now() });
+    bub.innerHTML = md(out);
+    afterReply(out);
+  } catch (e) {
+    bub.innerHTML = '<span style="color:#e05a5a">调用失败：' + esc(e.message) + '</span><br><span style="color:#9aa3b8;font-size:13px">可能原因：未填 Key / 接口不支持浏览器跨域 / 网络问题。可点右上「设置」→「手动模式说明」，复制提示词到 AI 对话框跑完再粘回来。</span>';
+    S.messages.push({ role: 'sys', content: '调用失败：' + e.message, ts: Date.now() });
+  }
+  setBusy(false);
+  saveLocal(true);
+  if (S.settings.autoSync) cloudPush(true);
+  scheduleNextCheck();
+}
+function afterReply(out) {
+  const p = extractPanel(out);
+  if (p) { S.panel = p; S.panelAt = Date.now(); }
+  renderPanel(); renderChar(); renderChoices();
+  if (S.settings.autoSync) cloudPush(true);
+}
+function setBusy(v) { busy = v; $('#btnSend').disabled = v; $('#btnSend').textContent = v ? '…' : '发送'; }
+
+/* ================= 每小时自动加固设定 ================= */
+const COMPRESS_PROMPT = `你是跑团记录员。请把下面这段跑团对话压缩成结构化「设定快照」，供长团防遗忘使用。只输出 JSON，不要任何解释文字。
+JSON 结构：
+{"summary":"300字以内的分章节剧情摘要","world":"世界状态：时间地点、势力态势、已发生不可逆改变","npcs":[{"name":"姓名","note":"身份/口癖/动机/好感度"}],"quests":[{"title":"任务名","state":"进行中/已完成/失败","note":"线索与时限"}],"items":[{"name":"物品名","effect":"效果与是否装备"}],"learned":["已纠正的规则用法"]}
+要求：只记录对话中真实出现过的信息，未提及的字段给空值或空数组，禁止编造。`;
+
+async function rebuildSnapshot(manual) {
+  const msgs = S.messages.filter(m => m.role === 'user' || m.role === 'assistant');
+  if (msgs.length < 2) { if (manual) toast('剧情还太短，无需加固'); return; }
+  if (!apiKey()) { fallbackSnapshot(); return; }
+  const recent = msgs.slice(-30).map(m => (m.role === 'user' ? '【玩家】' : '【DM】') + m.content).join('\n\n').slice(-14000);
+  const old = S.snapshot && S.snapshot.summary ? `\n\n【上一版快照（用于合并，勿丢失其中仍有效的设定）】\n` + JSON.stringify({ summary: S.snapshot.summary, world: S.snapshot.world, npcs: S.snapshot.npcs, quests: S.snapshot.quests, items: S.snapshot.items, learned: S.snapshot.learned }) : '';
+  try {
+    const out = await callAI([
+      { role: 'system', content: COMPRESS_PROMPT },
+      { role: 'user', content: '对话记录：\n' + recent + old }
+    ], { noStream: true, temp: 0.2 });
+    const m = out.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('未返回 JSON');
+    const j = JSON.parse(m[0]);
+    S.snapshot = {
+      summary: j.summary || '', world: j.world || '',
+      npcs: j.npcs || [], quests: j.quests || [], items: j.items || [], learned: j.learned || [],
+      at: Date.now()
+    };
+    const p = extractPanel(lastDm());
+    if (p) { S.panel = p; S.panelAt = Date.now(); }
+    S.settings.lastCompress = Date.now();
+    renderSnapshot(); renderPanel();
+    saveLocal(true);
+    toast(manual ? '设定快照已重建' : '每小时自动加固：设定快照已更新');
+  } catch (e) {
+    fallbackSnapshot();
+    toast('自动加固降级为本地解析：' + e.message.slice(0, 40));
+  }
+}
+
+/* 无 Key / 调用失败时的本地降级：抽面板与条目，保证不掉设定 */
+function fallbackSnapshot() {
+  const p = extractPanel(lastDm());
+  if (p) { S.panel = p; S.panelAt = Date.now(); }
+  const dm = S.messages.filter(m => m.role === 'assistant').map(m => m.content);
+  const tail = dm.slice(-6).join('\n');
+  const lines = tail.split('\n').filter(l => l.trim().length > 2);
+  const grab = (re) => lines.filter(l => re.test(l)).map(l => l.replace(/^[\s·\-*>]+/, '').trim()).slice(-8);
+  S.snapshot = {
+    ...(S.snapshot || {}),
+    npcs: (S.snapshot && S.snapshot.npcs && S.snapshot.npcs.length) ? S.snapshot.npcs : grab(/NPC|说|道：|答道|低声/),
+    quests: (S.snapshot && S.snapshot.quests && S.snapshot.quests.length) ? S.snapshot.quests : grab(/任务|线索|委托|悬赏/),
+    items: (S.snapshot && S.snapshot.items && S.snapshot.items.length) ? S.snapshot.items : grab(/获得|拾取|购买|物品/),
+    summary: (S.snapshot && S.snapshot.summary) || ('（本地摘要，未调用模型）最近进展：\n' + lines.slice(-12).join('\n')),
+    at: Date.now()
+  };
+  S.settings.lastCompress = Date.now();
+  renderSnapshot(); renderPanel();
+  saveLocal(true);
+}
+
+/* 计时：每 30 秒检查是否到点 */
+let nextDue = 0;
+function scheduleNextCheck() {
+  const ms = Math.max(1, S.settings.intervalMin || 60) * 60000;
+  nextDue = (S.settings.lastCompress || S.meta.started || Date.now()) + ms;
+}
+function tickTimer() {
+  if (!S.settings.hourly) { setChip('chipTimer', '自动加固已关', 'warn'); return; }
+  if (!nextDue) scheduleNextCheck();
+  const left = nextDue - Date.now();
+  if (left <= 0) {
+    const hasNew = S.messages.filter(m => m.ts && m.ts > (S.settings.lastCompress || 0)).length >= 2;
+    if (hasNew && !busy) rebuildSnapshot(false);
+    else S.settings.lastCompress = Date.now();
+    scheduleNextCheck();
+    return;
+  }
+  const mm = Math.floor(left / 60000), ss = Math.floor((left % 60000) / 1000);
+  setChip('chipTimer', '设定加固 ' + mm + ':' + String(ss).padStart(2, '0'), left < 5 * 60000 ? 'warn' : '');
+}
+setInterval(tickTimer, 1000);
+
+/* ================= 云端存档 ================= */
+function saveURL() {
+  const st = S.settings;
+  if (st.cloud === 'custom') return (st.endpoint || '').trim();
+  if (!st.roomId) return '';
+  if (st.cloud === 'jsonblob') return 'https://jsonblob.com/api/jsonBlob/' + st.roomId;
+  return 'https://api.jsonstorage.net/v1/json/' + st.roomId;
+}
+function packSave() {
+  return {
+    v: 1, at: Date.now(),
+    messages: S.messages, panel: S.panel, panelAt: S.panelAt,
+    snapshot: S.snapshot, meta: S.meta,
+    settings: { hourly: S.settings.hourly, intervalMin: S.settings.intervalMin, temp: S.settings.temp, model: S.settings.model, baseUrl: S.settings.baseUrl }
+  };
+}
+async function cloudCreate() {
+  const st = S.settings;
+  if (st.cloud === 'custom') {
+    if (!st.endpoint) throw new Error('未填自定义接口地址');
+    const r = await fetch(st.endpoint, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(packSave()) });
+    if (!r.ok) throw new Error('写入失败 ' + r.status);
+    st.roomId = 'custom';
+    return st.roomId;
+  }
+  let errMsg = '';
+  try {
+    const r = await fetch('https://api.jsonstorage.net/v1/json', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(packSave())
+    });
+    if (r.ok) {
+      const j = await r.json();
+      const uri = j.uri || j.url || '';
+      if (uri) { st.cloud = 'jsonstorage'; st.roomId = String(uri).split('/').pop(); return st.roomId; }
+    } else errMsg = 'jsonstorage ' + r.status;
+  } catch (e) { errMsg = e.message; }
+  try {
+    const r2 = await fetch('https://jsonblob.com/api/jsonBlob', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }, body: JSON.stringify(packSave())
+    });
+    if (!r2.ok) throw new Error('jsonblob ' + r2.status);
+    const id = (r2.headers.get('Location') || '').split('/').pop();
+    if (!id) throw new Error('未返回房间号');
+    st.cloud = 'jsonblob'; st.roomId = id; return id;
+  } catch (e) { errMsg += ' / ' + e.message; }
+  throw new Error('云存储创建失败（' + errMsg + '）');
+}
+async function cloudPush(silent) {
+  const st = S.settings;
+  if (st.cloud === 'off') return;
+  try {
+    if (!st.roomId) {
+      const id = await cloudCreate();
+      try { $('#roomId').value = id; } catch (e) { }
+      syncSettingsUI(); saveLocal(true);
+      setChip('chipCloud', '云房间已建', 'ok');
+      if (!silent) toast('云房间已创建：' + id + '　另一端点「从云读取」并填入该房间号');
+      return;
+    }
+    const r = await fetch(saveURL(), {
+      method: 'PUT', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(packSave())
+    });
+    if (!r.ok) throw new Error('上传失败 ' + r.status);
+    S.meta.cloudAt = Date.now();
+    setChip('chipCloud', '云已同步 ' + hhmm(new Date()), 'ok');
+    saveLocal(true);
+    if (!silent) toast('已上传到云');
+  } catch (e) {
+    setChip('chipCloud', '云同步失败', 'err');
+    if (!silent) toast('云同步失败：' + e.message);
+  }
+}
+async function cloudPull(silent) {
+  const st = S.settings;
+  try {
+    if (!st.roomId) throw new Error('还没有房间号：先上传一次，或填入另一端的房间号');
+    const r = await fetch(saveURL(), { headers: { 'Accept': 'application/json' } });
+    if (!r.ok) throw new Error('读取失败 ' + r.status);
+    const data = await r.json();
+    applySave(data);
+    setChip('chipCloud', '云端已载入 ' + hhmm(new Date()), 'ok');
+    if (!silent) toast('已从云读取存档');
+  } catch (e) {
+    setChip('chipCloud', '云读取失败', 'err');
+    if (!silent) toast('云读取失败：' + e.message);
+  }
+}
+function applySave(d) {
+  if (!d || !d.messages) throw new Error('存档格式不对');
+  S.messages = d.messages || [];
+  S.panel = d.panel || ''; S.panelAt = d.panelAt || 0;
+  S.snapshot = d.snapshot || S.snapshot;
+  S.meta = Object.assign(S.meta, d.meta || {});
+  if (d.settings) {
+    ['model', 'baseUrl', 'temp', 'hourly', 'intervalMin'].forEach(k => { if (d.settings[k] != null) S.settings[k] = d.settings[k]; });
+  }
+  saveLocal(true); renderAll(); renderPanel(); renderChar(); renderSnapshot(); syncSettingsUI();
+}
+
+/* ================= 存档码 / 文件 ================= */
+function b64enc(s) { return btoa(unescape(encodeURIComponent(s))); }
+function b64dec(s) { return decodeURIComponent(escape(atob(s))); }
+function genCode() {
+  const code = b64enc(JSON.stringify(packSave()));
+  $('#saveCode').value = code;
+  navigator.clipboard && navigator.clipboard.writeText(code).then(() => toast('存档码已复制')).catch(() => { });
+  if (navigator.clipboard && !navigator.clipboard.writeText) toast('存档码已生成');
+}
+function loadCode() {
+  const c = ($('#saveCode').value || '').trim();
+  if (!c) return toast('先粘贴存档码');
+  try { applySave(JSON.parse(b64dec(c))); toast('读档成功'); $('#archModal').classList.add('hidden'); }
+  catch (e) { toast('存档码无效：' + e.message); }
+}
+function exportFile() {
+  const blob = new Blob([JSON.stringify(packSave(), null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'dnd_save_' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '') + '.json';
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('已导出存档文件');
+}
+function importFile() {
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json';
+  inp.onchange = () => {
+    const f = inp.files[0]; if (!f) return;
+    const fr = new FileReader();
+    fr.onload = () => { try { applySave(JSON.parse(fr.result)); toast('导入成功'); $('#archModal').classList.add('hidden'); } catch (e) { toast('导入失败：' + e.message); } };
+    fr.readAsText(f);
+  };
+  inp.click();
+}
+async function doLoadFromPaste(text) {
+  /* /读档 后面跟的存档块：优先 JSON，其次原样交给 DM 恢复 */
+  const rest = text.replace(/^\/读档\s*/, '');
+  if (!rest.trim()) { addMsg('sys', '把 /存档 生成的存档块粘贴在 /读档 后面再发送，我会据此恢复全部状态。'); return; }
+  S.messages.push({ role: 'sys', content: '已接收存档块，正在据此恢复状态。', ts: Date.now() });
+  saveLocal(true);
+  const bub = addMsg('dm', '<span class="loading"><i></i><i></i><i></i></span>');
+  try {
+    const out = await callAI([
+      { role: 'system', content: buildSystem() },
+      { role: 'user', content: '以下是我上一次会话的存档块，请据此完整恢复角色卡、物品、任务、世界状态与剧情进度，然后只回复一句「欢迎回来，继续冒险」，并附状态面板。\n\n' + rest }
+    ], { onDelta: f => { bub.innerHTML = md(f); } });
+    S.messages.push({ role: 'assistant', content: out, ts: Date.now() });
+    bub.innerHTML = md(out); afterReply(out);
+  } catch (e) { bub.innerHTML = '<span style="color:#e05a5a">读档失败：' + esc(e.message) + '</span>'; }
+}
+
+/* ================= 元指令侧栏 ================= */
+function buildMetaUI() {
+  const box = $('#metaCmds'); box.innerHTML = '';
+  META.forEach(([cmd, desc]) => {
+    const b = el('button', 'mcmd', `<code>${cmd}</code><span>${desc}</span>`);
+    b.onclick = () => { send(cmd); if (window.innerWidth <= 860) switchTab('paneChat'); };
+    box.appendChild(b);
+  });
+  $('#ruleBtn').onclick = () => {
+    const k = ($('#ruleQ').value || '').trim();
+    send('/规则 ' + (k || '常用检定'));
+    if (window.innerWidth <= 860) switchTab('paneChat');
+  };
+}
+
+/* ================= 设置面板 ================= */
+function syncSettingsUI() {
+  const st = S.settings;
+  $('#setBase').value = st.baseUrl || '';
+  $('#setModel').value = st.model || '';
+  $('#setTemp').value = st.temp != null ? st.temp : 0.9;
+  $('#setKey').value = apiKey();
+  $('#setHourly').value = st.hourly ? '1' : '0';
+  $('#setInterval').value = st.intervalMin || 60;
+  $('#setCloud').value = st.cloud || 'jsonblob';
+  $('#setEndpoint').value = st.endpoint || '';
+  $('#fldCustom').style.display = st.cloud === 'custom' ? '' : 'none';
+  $('#roomId').value = st.roomId || '';
+  $('#cloudState').textContent = st.cloud === 'off' ? '云端已关闭（仅本机 + 存档码）'
+    : st.roomId ? ('房间号：' + st.roomId + (st.autoSync ? ' · 自动同步开' : ' · 自动同步关'))
+      : '尚未创建房间';
+}
+function saveSettings() {
+  const st = S.settings;
+  st.baseUrl = $('#setBase').value.trim() || 'https://api.deepseek.com/v1';
+  st.model = $('#setModel').value.trim() || 'deepseek-chat';
+  st.temp = parseFloat($('#setTemp').value) || 0.9;
+  st.hourly = $('#setHourly').value === '1';
+  st.intervalMin = Math.max(1, parseInt($('#setInterval').value, 10) || 60);
+  st.cloud = $('#setCloud').value;
+  st.endpoint = $('#setEndpoint').value.trim();
+  try { localStorage.setItem(LS_KEY, $('#setKey').value.trim()); } catch (e) { }
+  saveLocal(true); scheduleNextCheck(); syncSettingsUI();
+  $('#modal').classList.add('hidden'); toast('设置已保存');
+  if (!apiKey()) setChip('chipCloud', '未填 Key', 'warn');
+}
+
+/* ================= Tab ================= */
+function switchTab(id) {
+  document.querySelectorAll('.pane').forEach(p => p.classList.toggle('active', p.id === id));
+  document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+}
+document.querySelectorAll('.tabbar button').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
+
+/* ================= 事件绑定 ================= */
+$('#inputForm').addEventListener('submit', e => { e.preventDefault(); send(); });
+$('#input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey && window.innerWidth > 860) { e.preventDefault(); send(); }
+});
+$('#input').addEventListener('input', e => {
+  const t = e.target; t.style.height = 'auto'; t.style.height = Math.min(150, t.scrollHeight) + 'px';
+});
+$('#btnSettings').onclick = () => { syncSettingsUI(); $('#modal').classList.remove('hidden'); };
+$('#btnCloseSet').onclick = () => $('#modal').classList.add('hidden');
+$('#btnSaveSet').onclick = saveSettings;
+$('#setCloud').onchange = () => { $('#fldCustom').style.display = $('#setCloud').value === 'custom' ? '' : 'none'; };
+$('#btnManual').onclick = manualMode;
+$('#btnArchive').onclick = () => { syncSettingsUI(); $('#archModal').classList.remove('hidden'); };
+$('#btnCloseArch').onclick = () => $('#archModal').classList.add('hidden');
+$('#btnRoomGen').onclick = async () => {
+  toast('正在创建 / 校验云房间…');
+  try {
+    if (S.settings.cloud === 'off') S.settings.cloud = 'jsonstorage';
+    if (S.settings.roomId) { await cloudPush(false); }
+    else { const id = await cloudCreate(); $('#roomId').value = id; syncSettingsUI(); saveLocal(true); toast('房间号：' + id); }
+  } catch (e) { toast('创建失败：' + e.message); }
+};
+$('#btnCloudPush').onclick = () => cloudPush(false);
+$('#btnCloudPull').onclick = () => cloudPull(false);
+$('#btnCloudAuto').onclick = () => {
+  S.settings.autoSync = !S.settings.autoSync; saveLocal(true); syncSettingsUI();
+  toast('自动同步' + (S.settings.autoSync ? '已开启' : '已关闭'));
+};
+$('#btnGenCode').onclick = genCode;
+$('#btnLoadCode').onclick = loadCode;
+$('#btnExport').onclick = exportFile;
+$('#btnImport').onclick = importFile;
+$('#btnReset').onclick = () => {
+  if (!confirm('确认清空本机存档？此操作不可撤销（云端存档不受影响）。')) return;
+  localStorage.removeItem(LS); location.reload();
+};
+
+/* 手动模式：无 Key / 跨域失败时的兜底 */
+function manualMode() {
+  const sys = buildSystem();
+  const hist = S.messages.filter(m => m.role !== 'sys').slice(-12)
+    .map(m => (m.role === 'user' ? '【玩家】' : '【DM】') + m.content).join('\n\n');
+  const text = sys + (hist ? '\n\n━━━━ 对话记录 ━━━━\n' + hist : '') + '\n\n（请以 DM 身份继续，输出叙事 + 状态面板 + 编号选项）';
+  const w = window.open('', '_blank');
+  if (w) {
+    w.document.write('<meta charset="utf-8"><title>手动模式提示词</title><body style="background:#0e0f14;color:#e6e8f0;font:14px/1.7 system-ui;padding:20px"><h3 style="color:#d9b26a">手动模式：复制全文 → 粘贴到 AI 对话框 → 把回复粘回跑团台</h3><textarea style="width:100%;height:70vh;background:#15171f;color:#c7cede;border:1px solid #2a2e3d;border-radius:10px;padding:12px;font:12.5px/1.6 monospace">' + esc(text) + '</textarea><p style="color:#9aa3b8">回复粘回：把 AI 的回复整段粘贴到跑团台输入框，最前面加「【DM回复】」发送即可归档。</p>');
+    w.document.close();
+  } else {
+    navigator.clipboard.writeText(text).then(() => toast('提示词已复制到剪贴板'));
+  }
+}
+
+/* 支持把外部 AI 回复粘回来：【DM回复】xxx */
+const _send = send;
+send = async function (text) {
+  const t = (text != null ? text : $('#input').value);
+  const m = /^\s*【DM回复】([\s\S]*)$/.exec(t);
+  if (m) {
+    $('#input').value = '';
+    const body = m[1].trim();
+    if (!body) return;
+    addMsg('dm', body);
+    S.messages.push({ role: 'assistant', content: body, ts: Date.now() });
+    afterReply(body); saveLocal(true); renderChoices();
+    toast('已归档外部 DM 回复');
+    return;
+  }
+  return _send(text);
+};
+
+/* ================= 启动 ================= */
+(function boot() {
+  buildMetaUI();
+  renderAll();
+  renderPanel(); renderChar(); renderSnapshot();
+  syncSettingsUI();
+  if (!S.meta.started) S.meta.started = Date.now();
+  scheduleNextCheck();
+  tickTimer();
+  saveLocal(true);
+  if (!apiKey()) {
+    setChip('chipSave', '已存本机', 'ok');
+    setChip('chipCloud', '未填 Key', 'warn');
+  } else if (S.settings.roomId) {
+    setChip('chipCloud', '房间 ' + S.settings.roomId.slice(0, 6), 'ok');
+  }
+  /* 打开即尝试拉云存档（有房间号时） */
+  if (S.settings.cloud !== 'off' && S.settings.roomId && !S.messages.length) cloudPull(true);
+  window.addEventListener('beforeunload', () => { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) { } });
+})();
+</script>
+</body>
+</html>
